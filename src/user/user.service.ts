@@ -42,8 +42,7 @@ export class UserService {
             where: { email: body.email },
         });
         if (!user) throw new NotFoundException();
-        const hashedPassword = await bcrypt.hash(body.password, 10);
-        const isMatch = await bcrypt.compare(hashedPassword, user.password);
+        const isMatch = await bcrypt.compare(body.password, user.password);
         if (!isMatch) throw new UnprocessableEntityException();
         const access_token = this.auth.login(user.id);
         return { user, access_token };

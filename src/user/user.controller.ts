@@ -12,30 +12,31 @@ import { CreateUserBodyDto } from './dto/create-user.dto';
 import { LoginUserBodyDto } from './dto/login-user.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { User } from 'src/common/decorators/user.decorator';
+import { userInterface } from 'src/common/interfaces/user.interface';
 
 @Controller('user')
 export class UserController {
     constructor(private readonly userService: UserService) {}
 
     @Post()
-    create(@Body() body: CreateUserBodyDto) {
+    async create(@Body() body: CreateUserBodyDto) {
         return this.userService.create(body);
     }
 
     @Post('/login')
-    login(@Body() body: LoginUserBodyDto) {
+    async login(@Body() body: LoginUserBodyDto) {
         return this.userService.login(body);
     }
 
     @Get()
     @UseGuards(JwtAuthGuard)
-    getUser(@User() user: { id: number }) {
+    async getUser(@User() user: userInterface) {
         return this.userService.getUser(user.id);
     }
 
     @Put()
     @UseGuards(JwtAuthGuard)
-    update(@User() user: { id: number }, @Body() body: any) {
+    async update(@User() user: userInterface, @Body() body: any) {
         return this.userService.update(body, user.id);
     }
 }

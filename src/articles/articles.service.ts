@@ -13,6 +13,11 @@ import { UpdateArticleDto } from './dto/update-article.dto';
 @Injectable()
 export class ArticlesService {
     constructor(private prisma: PrismaService) {}
+
+    private async getArticle(slug) {
+        return await this.prisma.article.findUnique({ where: { slug } });
+    }
+
     async findAll(
         body,
     ): Promise<{ articles: Article[]; articlesCount: number }> {
@@ -35,9 +40,7 @@ export class ArticlesService {
     }
 
     async findOne(slug: string): Promise<{ article: Article | null }> {
-        const article = await this.prisma.article.findFirst({
-            where: { slug },
-        });
+        const article = await this.getArticle(slug);
         return { article };
     }
 
@@ -72,9 +75,7 @@ export class ArticlesService {
         slug: string,
         userId: number,
     ): Promise<{ article: Article }> {
-        const article = await this.prisma.article.findFirst({
-            where: { slug },
-        });
+        const article = await this.getArticle(slug);
         if (!article) throw new NotFoundException();
         if (article.authorId != userId) throw new ForbiddenException();
         const updatedArticle = await this.prisma.article.update({
@@ -87,9 +88,7 @@ export class ArticlesService {
     }
 
     async delete(slug: string, userId: number): Promise<{ article: Article }> {
-        const article = await this.prisma.article.findFirst({
-            where: { slug },
-        });
+        const article = await this.getArticle(slug);
         if (!article) throw new NotFoundException();
         if (article.authorId != userId) throw new ForbiddenException();
 
@@ -97,5 +96,22 @@ export class ArticlesService {
             where: { slug, authorId: userId },
         });
         return { article: deletedArticle };
+    }
+
+    async findAllSubs(userId: number): Promise<{ articles: Article[] }> {
+        const following = await this.prisma.follow.findMany({
+            where: { followerId: userId },
+            select: { followingId: true },
+        });
+
+        const followingIds = following.map((f) => f.followingId);
+        console.log(followingIds);
+        const articles = await this.prisma.article.findMany({
+            where: {
+                authorId: { in: followingIds },
+            },
+        });
+
+        return { articles };
     }
 }
