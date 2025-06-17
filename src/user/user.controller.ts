@@ -1,18 +1,11 @@
-import {
-    Body,
-    Controller,
-    Get,
-    Post,
-    Put,
-    Res,
-    UseGuards,
-} from '@nestjs/common';
+import { Body, Controller, Get, Post, Put, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { CreateUserBodyDto } from './dto/create-user.dto';
 import { LoginUserBodyDto } from './dto/login-user.dto';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
 import { User } from 'src/common/decorators/user.decorator';
 import { userInterface } from 'src/common/interfaces/user.interface';
+import { UpdateUserBodyDto } from './dto/update-user.dto';
 
 @Controller('user')
 export class UserController {
@@ -23,7 +16,7 @@ export class UserController {
         return this.userService.create(body);
     }
 
-    @Post('/login')
+    @Post('login')
     async login(@Body() body: LoginUserBodyDto) {
         return this.userService.login(body);
     }
@@ -36,7 +29,7 @@ export class UserController {
 
     @Put()
     @UseGuards(JwtAuthGuard)
-    async update(@User() user: userInterface, @Body() body: any) {
+    async update(@User() user: userInterface, @Body() body: UpdateUserBodyDto) {
         return this.userService.update(body, user.id);
     }
 }

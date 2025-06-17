@@ -8,24 +8,32 @@ import { User } from '@prisma/client';
 import { AuthService } from 'src/auth/auth.service';
 import { PrismaService } from 'src/prisma/prisma.service';
 import * as bcrypt from 'bcrypt';
+import { CreateUserBodyDto } from './dto/create-user.dto';
+import { LoginUserBodyDto } from './dto/login-user.dto';
+import { UpdateUserBodyDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UserService {
     constructor(
-        private prisma: PrismaService,
-        private auth: AuthService,
+        private readonly prisma: PrismaService,
+        private readonly authService: AuthService,
     ) {}
 
-    async create(body): Promise<{ user: User; access_token }> {
+    async create(
+        body: CreateUserBodyDto,
+    ): Promise<{ user: User; access_token: string }> {
         const existingUser = await this.prisma.user.findFirst({
             where: {
                 OR: [{ username: body.username }, { email: body.email }],
             },
         });
+
         if (existingUser) {
-            throw new BadRequestException('User alredy exists');
+            throw new BadRequestException('User already exists');
         }
+
         const hashedPassword = await bcrypt.hash(body.password, 10);
+
         const user = await this.prisma.user.create({
             data: {
                 username: body.username,
@@ -33,37 +41,64 @@ export class UserService {
                 password: hashedPassword,
             },
         });
-        const access_token = this.auth.login(user.id);
+
+        const access_token = this.authService.login(user.id);
         return { user, access_token };
     }
 
-    async login(body): Promise<{ user: User; access_token }> {
-        const user = await this.prisma.user.findFirst({
+    async login(
+        body: LoginUserBodyDto,
+    ): Promise<{ user: User; access_token: string }> {
+        const user = await this.prisma.user.findUnique({
             where: { email: body.email },
         });
-        if (!user) throw new NotFoundException();
-        const isMatch = await bcrypt.compare(body.password, user.password);
-        if (!isMatch) throw new UnprocessableEntityException();
-        const access_token = this.auth.login(user.id);
+
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        const isPasswordValid = await bcrypt.compare(
+            body.password,
+            user.password,
+        );
+
+        if (!isPasswordValid) {
+            throw new UnprocessableEntityException('Invalid credentials');
+        }
+
+        const access_token = this.authService.login(user.id);
         return { user, access_token };
     }
 
-    async getUser(userId): Promise<{ user: User; access_token }> {
-        const user = await this.prisma.user.findFirst({
+    async getUser(
+        userId: number,
+    ): Promise<{ user: User; access_token: string }> {
+        const user = await this.prisma.user.findUnique({
             where: { id: userId },
         });
-        if (!user) throw new NotFoundException();
-        const access_token = this.auth.login(user.id);
+
+        if (!user) {
+            throw new NotFoundException('User not found');
+        }
+
+        const access_token = this.authService.login(user.id);
         return { user, access_token };
     }
 
-    async update(body, userId): Promise<{ user: User; access_token }> {
-        if (body.password) body.password = await bcrypt.hash(body.password, 10);
+    async update(
+        body: UpdateUserBodyDto,
+        userId: number,
+    ): Promise<{ user: User; access_token: string }> {
+        if (body.password) {
+            body.password = await bcrypt.hash(body.password, 10);
+        }
+
         const user = await this.prisma.user.update({
             where: { id: userId },
             data: body,
         });
-        const access_token = this.auth.login(user.id);
+
+        const access_token = this.authService.login(user.id);
         return { user, access_token };
     }
 }

@@ -8,9 +8,9 @@ import {
 } from '@nestjs/common';
 import { ProfilesService } from './profiles.service';
 import { JwtAuthGuard } from 'src/common/guards/jwt-auth.guard';
+import { OptionalJwtAuthGuard } from 'src/common/guards/optional-jwt-auth.guard';
 import { User } from 'src/common/decorators/user.decorator';
 import { userInterface } from 'src/common/interfaces/user.interface';
-import { OptionalJwtAuthGuard } from 'src/common/guards/optional-jwt-auth.guard';
 
 @Controller('profiles/:username')
 export class ProfilesController {
@@ -18,9 +18,9 @@ export class ProfilesController {
 
     @Get()
     @UseGuards(OptionalJwtAuthGuard)
-    async findUser(
+    async getProfile(
         @Param('username') username: string,
-        @User() user: userInterface,
+        @User() user: userInterface | null,
     ) {
         return this.profilesService.findUser(username, user?.id);
     }
