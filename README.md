@@ -76,6 +76,7 @@ Visit the API at `http://localhost:3000`
 ```bash
 # Unit and integration tests
 npm run test
+<<<<<<< HEAD
 ```
 
 ---
@@ -90,6 +91,25 @@ http://localhost:3000/docs
 
 It includes schemas, parameters, and example requests for every endpoint.
 
+=======
+
+# End-to-end tests
+npm run test:e2e
+```
+
+---
+
+## 📚 API Documentation
+
+Once the server is running, you can access Swagger documentation at:
+
+```
+http://localhost:3000/docs
+```
+
+It includes schemas, parameters, and example requests for every endpoint.
+
+>>>>>>> e7268fe46c8897174b2874ee047e2c93e0a801ae
 ---
 
 ## 📝 Project Structure
